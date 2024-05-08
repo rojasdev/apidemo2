@@ -26,7 +26,7 @@
             };
 
             // Send data as JSON via AJAX
-            fetch('http://localhost/apidemo/serve/create.php', {
+            fetch('https://devlab.helioho.st/serve/create.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
