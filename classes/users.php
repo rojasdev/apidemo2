@@ -9,12 +9,49 @@ class Users{
     public $id;
     public $username;
     public $password;
+    public $image;
  
     // constructor with $db as database connection
     public function __construct($db){
         $this->conn = $db;
     }
 
+    function create_secure() {
+        // Query to check if the username already exists
+    $check_query = "SELECT id FROM " . $this->table_name . " WHERE username = ?";
+    $check_stmt = $this->conn->prepare($check_query);
+    $check_stmt->bindParam(1, $this->username);
+    $check_stmt->execute();
+    
+    // If the username already exists, return false
+    if ($check_stmt->rowCount() > 0) {
+        return false; // Username already exists
+    }
+    
+    // Hash the password
+    $hashed_password = password_hash($this->password, PASSWORD_DEFAULT);
+    
+    // Query to insert record
+    $query = "INSERT INTO
+                " . $this->table_name . "
+            SET
+                username = :username, password = :password";
+    
+    // Prepare query
+    $stmt = $this->conn->prepare($query);
+    
+    // Bind values using named parameters
+    $stmt->bindParam(":username", $this->username);
+    $stmt->bindParam(":password", $hashed_password);
+    
+    // Execute query
+    if ($stmt->execute()) {
+        return true; // Record inserted successfully
+    }
+    
+    return false; // Error in execution
+    }
+    
     // create user
     function create() {
         // Query to check if the username already exists
@@ -96,5 +133,26 @@ class Users{
     
         return $stmt;
     }
+
+    // create user
+    function upload($file) {
+            $data = [
+                [$file],
+            ];
+            $stmt = $this->conn->prepare("INSERT INTO images(image_file) VALUES (?)");
+            try {
+                $this->conn->beginTransaction();
+                foreach ($data as $row)
+                {
+                    $stmt->execute($row);
+                }
+                $this->conn->commit();
+            }catch (Exception $e){
+                $this->conn->rollback();
+                throw $e;
+            }
+    
+            return true;
+        }
 }
 ?>
